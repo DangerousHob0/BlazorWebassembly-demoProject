@@ -1,0 +1,70 @@
+@using BlazorWebAssembly.Infrastructure
+@page "/edit/{id:long}"
+@page "/create"
+
+<link href="/blazorValidation.css" rel="stylesheet" />
+
+<h4 class="bg-@Theme text-center text-white p-2">@Mode</h4>
+
+<EditForm Model="Item" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    @if (Mode == "Edit") {
+        <div class="form-group">
+            <label>ID:</label>
+            <InputNumber class="form-control"
+                @bind-Value="Item.Id" readonly />
+        </div>
+    }
+    <div class="form-group">
+        <label>Title:</label>
+        <ValidationMessage For="@(() => Item.Title)" />
+        <InputText class="form-control" @bind-Value="Item.Title" />
+    </div>
+    <div class="form-group">
+        <label>Description:</label>
+        <ValidationMessage For="@(() => Item.Description)" />
+        <InputText class="form-control" @bind-Value="Item.Description"/>
+    </div>
+    <div class="form-group">
+        <label>Date:</label>
+        <ValidationMessage For="@(() => Item.Date)" />
+        @* <input type="datetime-local" @bind-value="Item.Date"/> *@
+        <InputDateTime class="form-control col-sm-4" @bind-Value="Item.Date"></InputDateTime>
+    </div>
+    <div class="text-center">
+        <button type="submit" class="btn btn-@Theme">Save</button>
+        <NavLink class="btn btn-secondary" href="">Back</NavLink>
+    </div>
+</EditForm>
+
+@code {
+
+    [Inject]
+    public HttpClient Http { get; set; }
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+    public string test { get; set; }
+
+    public TodoItem Item { get; set; } = new TodoItem();
+
+    protected async override Task OnParametersSetAsync() {
+        if (Mode == "Edit") {
+            Item = await Http.GetJsonAsync<TodoItem>($"/api/tasks/{Id}");
+        }
+    }
+
+    public string Theme => Id == 0 ? "primary" : "warning";
+    public string Mode => Id == 0 ? "Create" : "Edit";
+
+    public async Task HandleValidSubmit()  {
+
+        System.Console.WriteLine(Item.Title);
+        await Http.SendJsonAsync(Mode == "Create" ? HttpMethod.Post : HttpMethod.Put, 
+            "/api/tasks", Item);
+        NavManager.NavigateTo("/");
+    }
+}

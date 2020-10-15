@@ -1,0 +1,66 @@
+@page "/"
+@page "/list"
+
+<h5 class="bg-primary text-white text-center p-2">Tasks</h5>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th><th>Title</th><th>Description</th><th>Date</th><th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if  (Tasks.Count() == 0) {
+            <tr><th colspan="5" class="p-4 text-center">Loading Data...</th></tr>
+        } else {
+            @foreach (TodoItem i in Tasks) {
+                <tr>
+                    <td>@i.Id</td>
+                    <td>@i.Title</td>
+                    <td>@i.Description</td>
+                    <td>@i.Date</td>
+                    <td class="text-center">
+                        <NavLink class="btn btn-sm btn-info" 
+                            href="@GetDetailsUrl(i.Id)">
+                            Details
+                        </NavLink>
+                        <NavLink class="btn btn-sm btn-warning" 
+                            href="@GetEditUrl(i.Id)">
+                            Edit
+                        </NavLink>
+                        <button class="btn btn-sm btn-danger" 
+                            @onclick="@(() => HandleDelete(i))">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+@code {
+
+    [Inject]
+    public HttpClient Http { get; set; }
+
+    public TodoItem[] Tasks { get; set; } = Array.Empty<TodoItem>();
+
+    protected async override Task OnInitializedAsync() {
+        await UpdateData();
+    }
+
+    private async Task UpdateData() {
+        Tasks = await Http.GetJsonAsync<TodoItem[]>("/api/tasks");
+    }
+
+    string GetEditUrl(long id) => $"edit/{id}";
+    string GetDetailsUrl(long id) => $"details/{id}";
+
+    public async Task HandleDelete(TodoItem i) {
+        HttpResponseMessage resp =
+            await Http.DeleteAsync($"/api/tasks/{i.Id}");
+        if (resp.IsSuccessStatusCode) {
+            await UpdateData();
+        }
+    }
+}

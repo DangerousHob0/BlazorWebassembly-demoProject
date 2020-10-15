@@ -1,0 +1,43 @@
+@page "/details/{id:long}"
+
+<h4 class="bg-info text-center text-white p-2">Details</h4>
+
+<div class="form-group">
+    <label>ID:</label>
+    <input class="form-control" value="@Item.Id" disabled />
+</div>
+<div class="form-group">
+    <label>Title:</label>
+    <input class="form-control" value="@Item.Title" disabled />
+</div>
+<div class="form-group">
+    <label>Description:</label>
+    <input class="form-control" value="@Item.Description" disabled />
+</div>
+<div class="form-group">
+    <label>Date:</label>
+    <input class="form-control" value="@Item.Date" disabled />
+</div>
+<div class="text-center">
+    <NavLink class="btn btn-info" href="@EditUrl">Edit</NavLink>
+    <NavLink class="btn btn-secondary" href="">Back</NavLink>
+</div>
+
+@code {
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    [Inject]
+    public HttpClient Http { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public TodoItem Item { get; set; } = new TodoItem();
+
+    protected async override Task OnParametersSetAsync() {
+        Item = await Http.GetJsonAsync<TodoItem>($"/api/tasks/{Id}");
+    }
+    public string EditUrl => $"edit/{Id}";
+}
